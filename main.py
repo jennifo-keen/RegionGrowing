@@ -53,6 +53,15 @@ class HeaderPanel(QtWidgets.QFrame):
         )
         self.imgLabel.setPixmap(scaled_pixmap)
 
+    def mousePressEvent(self, event: QtGui.QMouseEvent):
+        if self.imgLabel.underMouse():
+            pos = event.pos() - self.imgLabel.pos()
+            self.clicked.emit(pos)
+        super().mousePressEvent(event)
+
+    # Tín hiệu custom
+    clicked = QtCore.Signal(QtCore.QPoint)
+
 
 class LeftSidebar(QtWidgets.QFrame):
     def __init__(self, parent=None):
@@ -204,11 +213,11 @@ class LeftSidebar(QtWidgets.QFrame):
         self.btnUpload.setCursor(QtCore.Qt.PointingHandCursor)
         layout.addWidget(self.btnUpload)
 
-        # Kích thước lọc
-        layout.addWidget(self._label("Kích thước lọc:"))
-        self.cboKernel = QtWidgets.QComboBox()
-        self.cboKernel.addItems(["3 × 3", "5 × 5", "7 × 7"])
-        layout.addWidget(self.cboKernel)
+        # # Kích thước lọc
+        # layout.addWidget(self._label("Kích thước lọc:"))
+        # self.cboKernel = QtWidgets.QComboBox()
+        # self.cboKernel.addItems(["3 × 3", "5 × 5", "7 × 7"])
+        # layout.addWidget(self.cboKernel)
 
         # Ngưỡng
         layout.addWidget(self._label("Ngưỡng (Threshold)"))
@@ -237,6 +246,7 @@ class LeftSidebar(QtWidgets.QFrame):
         self.txtSeed = QtWidgets.QLineEdit()
         self.txtSeed.setPlaceholderText("211,375")
         self.txtSeed.setAlignment(QtCore.Qt.AlignCenter)
+        self.txtSeed.setReadOnly(True)
         layout.addWidget(self.txtSeed)
 
         layout.addStretch()
@@ -280,6 +290,11 @@ class LeftSidebar(QtWidgets.QFrame):
         return card
 
 class MainWindow(QtWidgets.QWidget):
+    def handle_seed_click(self, point: QtCore.QPoint):
+        # Lưu vị trí điểm mầm vào text box
+        x, y = point.x(), point.y()
+        self.left_widget.txtSeed.setText(f"{x},{y}")
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Thuật toán nở vùng")
@@ -363,6 +378,7 @@ class MainWindow(QtWidgets.QWidget):
         imgs_layout.setSpacing(18)
 
         self.panelInput = HeaderPanel("Ảnh gốc")
+        self.panelInput.clicked.connect(self.handle_seed_click)
         self.panelOutput = HeaderPanel("Kết quả")
         imgs_layout.addWidget(self.panelInput, 1)
         imgs_layout.addWidget(self.panelOutput, 1)
