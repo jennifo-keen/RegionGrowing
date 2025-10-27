@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import sys
 from PySide6 import QtCore, QtGui, QtWidgets
+import numpy as np
 
 APP_BG = "#f4f4f4"
 PANEL_BG = "#e0e0e0"
@@ -228,13 +229,17 @@ class LeftSidebar(QtWidgets.QFrame):
 
         # Loại lân cận
         layout.addWidget(self._label("Loại lân cận"))
-        layout.addWidget(self._card_with_radios(
-            ["Loại lân cận 4 (N4)", "Loại lân cận 8 (N8)"], default_index=0))
+        # giữ tham chiếu (không thay đổi giao diện)
+        self.cardNeighbor = self._card_with_radios(
+            ["Loại lân cận 4 (N4)", "Loại lân cận 8 (N8)"], default_index=0)
+        layout.addWidget(self.cardNeighbor)
 
         # Loại thuật toán
         layout.addWidget(self._label("Loại thuật toán"))
-        layout.addWidget(self._card_with_radios(
-            ["Nở vùng cơ bản", "Nở vùng thống kê"], default_index=0))
+        # giữ tham chiếu (không thay đổi giao diện)
+        self.cardAlgo = self._card_with_radios(
+            ["Nở vùng cơ bản", "Nở vùng thống kê"], default_index=0)
+        layout.addWidget(self.cardAlgo)
 
         # Gợi ý
         note = QtWidgets.QLabel("Hãy click vào ảnh để chọn điểm mầm")
@@ -291,8 +296,8 @@ class LeftSidebar(QtWidgets.QFrame):
 
 class MainWindow(QtWidgets.QWidget):
     def handle_seed_click(self, point: QtCore.QPoint):
-        # Lưu vị trí điểm mầm vào text box
         x, y = point.x(), point.y()
+        print(f"Clicked at: ({x},{y})")  # kiểm tra có chạy gì thêm không
         self.left_widget.txtSeed.setText(f"{x},{y}")
 
     def __init__(self):
@@ -330,6 +335,9 @@ class MainWindow(QtWidgets.QWidget):
         root.addWidget(scroll, 1)
         # Kết nối nút upload với hàm xử lý
         self.left_widget.btnUpload.clicked.connect(self.upload_image)
+
+        # Kết nối nút Bắt đầu với hàm nở vùng (chỉ thêm logic, không thay giao diện)
+        self.left_widget.btnStart.clicked.connect(self.run_region_growing_basic)
 
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
@@ -402,6 +410,121 @@ class MainWindow(QtWidgets.QWidget):
             if not pixmap.isNull():
                 self.panelInput.set_image(pixmap)
 
+    def _get_selected_index(self, card_frame):
+        """Trả về id radio được chọn trong card (0-based)."""
+        try:
+            return card_frame.button_group.checkedId()
+        except Exception:
+            return 0
+
+    def run_region_growing_basic(self):
+        seed_text = self.left_widget.txtSeed.text().strip()
+        if not seed_text:
+            QtWidgets.QMessageBox.warning(self, "Thiếu điểm mầm", "Vui lòng click vào ảnh để chọn điểm mầm.")
+            return
+        try:
+            sx, sy = [int(s) for s in seed_text.split(",")]
+        except Exception:
+            QtWidgets.QMessageBox.warning(self, "Sai định dạng điểm mầm", "Định dạng đúng: x,y (ví dụ: 211,375)")
+            return
+
+        pix = self.panelInput.imgLabel.pixmap()
+        if pix is None:
+            QtWidgets.QMessageBox.warning(self, "Chưa có ảnh", "Vui lòng upload ảnh đầu vào trước.")
+            return
+
+        thresh = self.left_widget.spnThresh.value()
+        neighbor_idx = self._get_selected_index(self.left_widget.cardNeighbor)
+        algo_idx = self._get_selected_index(self.left_widget.cardAlgo)
+
+        if algo_idx != 0:
+            QtWidgets.QMessageBox.information(self, "Thông báo", "Hiện chỉ hỗ trợ 'Nở vùng cơ bản'.")
+            return
+
+        qimg_gray = pix.toImage().convertToFormat(QtGui.QImage.Format_Grayscale8)
+        qimg_orig = pix.toImage().convertToFormat(QtGui.QImage.Format_ARGB32)
+        w, h = qimg_gray.width(), qimg_gray.height()
+
+        label_pixmap = self.panelInput.imgLabel.pixmap()
+        if label_pixmap:
+            label_w, label_h = label_pixmap.width(), label_pixmap.height()
+            label_rect = self.panelInput.imgLabel.contentsRect()
+
+            offset_x = (label_rect.width() - label_w) // 2
+            offset_y = (label_rect.height() - label_h) // 2
+
+            sx_on_scaled = sx - offset_x
+            sy_on_scaled = sy - offset_y
+
+            scale_x = w / label_w
+            scale_y = h / label_h
+            sx = int(sx_on_scaled * scale_x)
+            sy = int(sy_on_scaled * scale_y)
+
+        if not (0 <= sx < w and 0 <= sy < h):
+            QtWidgets.QMessageBox.warning(self, "Seed ngoài vùng",
+                                          f"Điểm mầm ({sx},{sy}) không nằm trong ảnh ({w}×{h}).\n"
+                                          f"Vui lòng click vào vùng ảnh.")
+            return
+
+        img_array = np.zeros((h, w), dtype=np.uint8)
+        for y in range(h):
+            for x in range(w):
+                img_array[y, x] = QtGui.QColor(qimg_gray.pixel(x, y)).red()
+
+        seed_value = img_array[sy, sx]
+        visited = np.zeros((h, w), dtype=bool)
+        region = np.zeros((h, w), dtype=bool)
+
+        from collections import deque
+        queue = deque([(sx, sy)])
+        visited[sy, sx] = True
+        region[sy, sx] = True
+        region_count = 1
+
+        if neighbor_idx == 0:
+            neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        else:
+            neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
+
+        while queue:
+            x, y = queue.popleft()
+            current_seed_value = int(img_array[y, x])
+
+            for dx, dy in neighbors:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h and not visited[ny, nx]:
+                    visited[ny, nx] = True
+                    neighbor_val = int(img_array[ny, nx])
+
+                    if abs(neighbor_val - current_seed_value) <= thresh:
+                        region[ny, nx] = True
+                        region_count += 1
+                        queue.append((nx, ny))
+
+        result = QtGui.QImage(qimg_orig)
+        alpha_overlay = 150
+
+        for y in range(h):
+            for x in range(w):
+                if region[y, x]:
+                    orig_col = QtGui.QColor(result.pixel(x, y))
+                    a = alpha_overlay / 255.0
+                    r = int(a * 255 + (1 - a) * orig_col.red())
+                    g = int((1 - a) * orig_col.green())
+                    b = int((1 - a) * orig_col.blue())
+                    result.setPixelColor(x, y, QtGui.QColor(r, g, b))
+
+        # --- Hiển thị kết quả ---
+        out_pix = QtGui.QPixmap.fromImage(result)
+        self.panelOutput.set_image(out_pix)
+
+        QtWidgets.QMessageBox.information(
+            self, "Hoàn thành",
+            f"Hoàn thành nở vùng.\n"
+            f"Kích thước vùng: {region_count} điểm\n"
+            f"Giá trị seed: {seed_value}"
+        )
 
 def main():
     # (Qt6 vẫn hỗ trợ đặt thuộc tính DPI; có thể bỏ nếu không cần)
