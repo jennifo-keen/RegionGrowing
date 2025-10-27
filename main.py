@@ -513,7 +513,6 @@ class MainWindow(QtWidgets.QWidget):
                     b = int((1 - a) * orig_col.blue())
                     result.setPixelColor(x, y, QtGui.QColor(r, g, b))
 
-        # --- Hiển thị kết quả ---
         out_pix = QtGui.QPixmap.fromImage(result)
         self.panelOutput.set_image(out_pix)
 
