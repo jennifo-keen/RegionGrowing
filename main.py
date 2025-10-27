@@ -297,7 +297,6 @@ class LeftSidebar(QtWidgets.QFrame):
 class MainWindow(QtWidgets.QWidget):
     def handle_seed_click(self, point: QtCore.QPoint):
         x, y = point.x(), point.y()
-        print(f"Clicked at: ({x},{y})")  # kiểm tra có chạy gì thêm không
         self.left_widget.txtSeed.setText(f"{x},{y}")
 
     def __init__(self):
@@ -411,7 +410,6 @@ class MainWindow(QtWidgets.QWidget):
                 self.panelInput.set_image(pixmap)
 
     def _get_selected_index(self, card_frame):
-        """Trả về id radio được chọn trong card (0-based)."""
         try:
             return card_frame.button_group.checkedId()
         except Exception:
