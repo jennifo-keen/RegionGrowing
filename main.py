@@ -472,14 +472,6 @@ class MainWindow(QtWidgets.QWidget):
         out_pix = QtGui.QPixmap.fromImage(result)
         self.panelOutput.set_image(out_pix)
 
-        QtWidgets.QMessageBox.information(
-            self, "Hoàn thành",
-            f"Hoàn thành nở vùng.\n"
-            f"Kích thước vùng: {region_count} điểm\n"
-            f"Giá trị seed: {seed_value}\n"
-            f"Ngưỡng: {thresh}"
-        )
-
 def main():
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
