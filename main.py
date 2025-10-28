@@ -38,15 +38,11 @@ class HeaderPanel(QtWidgets.QFrame):
         self.imgLabel.setStyleSheet(f"background: {PINK}; border-radius: 10px;")
         self.imgLabel.setMinimumSize(500, 430)
 
-
         outer.addWidget(header)
         outer.addWidget(self.imgLabel, 1)
 
     def set_image(self, qpixmap: QtGui.QPixmap):
-        # Lấy kích thước khung
         target_size = self.imgLabel.size()
-
-        # Scale giữ tỉ lệ ảnh, không méo
         scaled_pixmap = qpixmap.scaled(
             target_size,
             QtCore.Qt.KeepAspectRatio,
@@ -60,7 +56,6 @@ class HeaderPanel(QtWidgets.QFrame):
             self.clicked.emit(pos)
         super().mousePressEvent(event)
 
-    # Tín hiệu custom
     clicked = QtCore.Signal(QtCore.QPoint)
 
 
@@ -70,7 +65,6 @@ class LeftSidebar(QtWidgets.QFrame):
         self.setObjectName("LeftSidebar")
         self.setAttribute(QtCore.Qt.WA_StyledBackground, True)
         self.setStyleSheet("""
-            /* --- reset --- */
             QLabel, QRadioButton, QCheckBox { background: transparent; }
 
             QFrame#LeftSidebar {
@@ -86,7 +80,6 @@ class LeftSidebar(QtWidgets.QFrame):
             }
             QLabel.note { color: #444; font-size: 12px; }
 
-            /* Upload */
             QPushButton#btnUpload {
                 background: #d9d9d9;
                 color: #111;
@@ -96,7 +89,6 @@ class LeftSidebar(QtWidgets.QFrame):
             }
             QPushButton#btnUpload:hover { background: #cfcfcf; }
 
-            /* ===== Input base ===== */
             QComboBox, QSpinBox, QLineEdit {
                 height: 36px;
                 background: #fff;
@@ -108,9 +100,8 @@ class LeftSidebar(QtWidgets.QFrame):
             QLineEdit { padding: 0 12px; }
             QLineEdit::placeholder { color: #999; }
 
-            /* ===== QComboBox – hiện đại ===== */
             QComboBox {
-                padding: 0 38px 0 12px;                /* chừa chỗ mũi tên */
+                padding: 0 38px 0 12px;
             }
             QComboBox::drop-down {
                 subcontrol-origin: padding;
@@ -122,7 +113,6 @@ class LeftSidebar(QtWidgets.QFrame):
                 background: #f5f5f5;
             }
             QComboBox::drop-down:hover { background: #eaeaea; }
-            /* Tam giác mũi tên */
             QComboBox::down-arrow {
                 image: url(arrow-down-angle.svg);
                 width: 12px;
@@ -130,7 +120,6 @@ class LeftSidebar(QtWidgets.QFrame):
                 margin-right: 6px;
             }
 
-            /* Danh sách thả xuống */
             QComboBox QAbstractItemView {
                 background: #fff;
                 color: #111;
@@ -144,9 +133,8 @@ class LeftSidebar(QtWidgets.QFrame):
                 height: 28px; padding: 4px 10px;
             }
 
-            /* ===== QSpinBox – hiện đại ===== */
             QSpinBox {
-                padding-right: 30px;                   /* chừa chỗ nút up/down */
+                padding-right: 30px;
             }
             QSpinBox::up-button, QSpinBox::down-button {
                 subcontrol-origin: border;
@@ -185,7 +173,7 @@ class LeftSidebar(QtWidgets.QFrame):
                 height: 12px;
                 margin-right: 6px;
             }
-            /* ===== Radio rõ ràng ===== */
+
             QGroupBox { border: none; background: transparent; }
             QRadioButton, QCheckBox { color: #111; font-size: 14px; spacing: 6px; }
             QRadioButton::indicator {
@@ -196,7 +184,6 @@ class LeftSidebar(QtWidgets.QFrame):
             QRadioButton::indicator:checked { background: #000; border-color: #000; }
             QRadioButton::indicator:disabled { background: #eee; border-color: #ccc; }
 
-            /* Button chính */
             QPushButton.primary {
                 background: #000; color: #fff;
                 border-radius: 16px; height: 56px;
@@ -208,45 +195,31 @@ class LeftSidebar(QtWidgets.QFrame):
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(16)
 
-        # Upload ảnh
         self.btnUpload = QtWidgets.QPushButton("Upload ảnh")
         self.btnUpload.setObjectName("btnUpload")
         self.btnUpload.setCursor(QtCore.Qt.PointingHandCursor)
         layout.addWidget(self.btnUpload)
 
-        # # Kích thước lọc
-        # layout.addWidget(self._label("Kích thước lọc:"))
-        # self.cboKernel = QtWidgets.QComboBox()
-        # self.cboKernel.addItems(["3 × 3", "5 × 5", "7 × 7"])
-        # layout.addWidget(self.cboKernel)
-
-        # Ngưỡng
         layout.addWidget(self._label("Ngưỡng (Threshold)"))
         self.spnThresh = QtWidgets.QSpinBox()
         self.spnThresh.setRange(0, 255)
         self.spnThresh.setValue(10)
         layout.addWidget(self.spnThresh)
 
-        # Loại lân cận
         layout.addWidget(self._label("Loại lân cận"))
-        # giữ tham chiếu (không thay đổi giao diện)
         self.cardNeighbor = self._card_with_radios(
             ["Loại lân cận 4 (N4)", "Loại lân cận 8 (N8)"], default_index=0)
         layout.addWidget(self.cardNeighbor)
 
-        # Loại thuật toán
         layout.addWidget(self._label("Loại thuật toán"))
-        # giữ tham chiếu (không thay đổi giao diện)
         self.cardAlgo = self._card_with_radios(
             ["Nở vùng cơ bản", "Nở vùng thống kê"], default_index=0)
         layout.addWidget(self.cardAlgo)
 
-        # Gợi ý
         note = QtWidgets.QLabel("Hãy click vào ảnh để chọn điểm mầm")
         note.setProperty("class", "note")
         layout.addWidget(note)
 
-        # Điểm mầm
         layout.addWidget(self._label("Điểm mầm:"))
         self.txtSeed = QtWidgets.QLineEdit()
         self.txtSeed.setPlaceholderText("211,375")
@@ -256,7 +229,6 @@ class LeftSidebar(QtWidgets.QFrame):
 
         layout.addStretch()
 
-        # Bắt đầu
         self.btnStart = QtWidgets.QPushButton("Bắt đầu")
         self.btnStart.setCursor(QtCore.Qt.PointingHandCursor)
         self.btnStart.setProperty("class", "primary")
@@ -268,7 +240,6 @@ class LeftSidebar(QtWidgets.QFrame):
         return lab
 
     def _card_with_radios(self, items, default_index=0) -> QtWidgets.QFrame:
-        """Tạo thẻ trắng chứa các radio, viền nhẹ để dễ nhìn."""
         card = QtWidgets.QFrame()
         card.setAttribute(QtCore.Qt.WA_StyledBackground, True)
         card.setStyleSheet("""
@@ -291,7 +262,7 @@ class LeftSidebar(QtWidgets.QFrame):
             lay.addWidget(rb)
             group.addButton(rb, i)
 
-        card.button_group = group  # giữ tham chiếu
+        card.button_group = group
         return card
 
 class MainWindow(QtWidgets.QWidget):
@@ -303,26 +274,22 @@ class MainWindow(QtWidgets.QWidget):
         super().__init__()
         self.setWindowTitle("Thuật toán nở vùng")
         self.resize(1400, 820)
-        self.setMinimumHeight(820)  # để không bị cụt menu khi cửa sổ nhỏ quá
+        self.setMinimumHeight(820)
         self.setStyleSheet("""
             QWidget { background: #f4f4f4; font-family: 'Inter', 'Segoe UI', Arial; font-size: 15px; }
         """)
 
-        # ==== Tổng layout: ngang (menu trái + nội dung phải) ====
         root = QtWidgets.QHBoxLayout(self)
         root.setContentsMargins(24, 16, 24, 16)
         root.setSpacing(18)
 
-        # ==== Menu bên trái (1/3 chiều rộng) ====
-        # Gán thành self để dùng được ở các hàm khác (ví dụ: upload_image)
         self.left_widget = LeftSidebar()
         self.left_widget.setMinimumWidth(340)
         self.left_widget.setMaximumWidth(400)
         self.left_widget.setSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
 
-        # Scroll chứa self.left_widget
         scroll = QtWidgets.QScrollArea()
-        scroll.setWidget(self.left_widget)  # Cập nhật ở đây
+        scroll.setWidget(self.left_widget)
         scroll.setWidgetResizable(True)
         scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
         scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
@@ -330,24 +297,10 @@ class MainWindow(QtWidgets.QWidget):
         scroll.setFocusPolicy(QtCore.Qt.NoFocus)
         scroll.viewport().setAttribute(QtCore.Qt.WA_AcceptTouchEvents, False)
 
-        # Thêm vào layout chính
         root.addWidget(scroll, 1)
-        # Kết nối nút upload với hàm xử lý
         self.left_widget.btnUpload.clicked.connect(self.upload_image)
-
-        # Kết nối nút Bắt đầu với hàm nở vùng (chỉ thêm logic, không thay giao diện)
         self.left_widget.btnStart.clicked.connect(self.run_region_growing_basic)
 
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QtWidgets.QFrame.NoFrame)
-        scroll.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        scroll.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        scroll.setFocusPolicy(QtCore.Qt.NoFocus)  # không nhận wheel-focus
-        scroll.viewport().setAttribute(QtCore.Qt.WA_AcceptTouchEvents, False)
-
-        root.addWidget(scroll, 1)  # tỉ lệ 1 phần
-
-        # ==== Khu vực nội dung chính (2/3 chiều rộng) ====
         main_area = QtWidgets.QFrame()
         main_area.setStyleSheet("QFrame { background: #f4f4f4; border: none; }")
         main_area.setAttribute(QtCore.Qt.WA_StyledBackground, True)
@@ -356,14 +309,12 @@ class MainWindow(QtWidgets.QWidget):
         main_layout.setSpacing(18)
         main_layout.setContentsMargins(0, 0, 0, 0)
 
-        # --- Nhóm tiêu đề + 2 khung ảnh ---
         group_frame = QtWidgets.QFrame()
         group_frame.setStyleSheet("QFrame { background: transparent; border: none; }")
         group_layout = QtWidgets.QVBoxLayout(group_frame)
         group_layout.setContentsMargins(0, 0, 0, 0)
         group_layout.setSpacing(18)
 
-        # ======= Thanh tiêu đề lớn =======
         header = QtWidgets.QFrame()
         header.setStyleSheet("""
             QFrame { background: #dadada; border-radius: 20px; }
@@ -377,7 +328,6 @@ class MainWindow(QtWidgets.QWidget):
         hh.addStretch()
         group_layout.addWidget(header)
 
-        # ======= Hai khung ảnh (Ảnh gốc – Kết quả) =======
         imgs_frame = QtWidgets.QFrame()
         imgs_frame.setStyleSheet("QFrame { background: transparent; border: none; }")
         imgs_layout = QtWidgets.QHBoxLayout(imgs_frame)
@@ -393,13 +343,8 @@ class MainWindow(QtWidgets.QWidget):
         group_layout.addWidget(imgs_frame, 1)
         main_layout.addWidget(group_frame, 1)
 
-        root.addWidget(main_area, 2)  # tỉ lệ 2 phần (2/3)
+        root.addWidget(main_area, 2)
 
-        # === Label "Nhóm 04" ở góc trái trên cùng (giữ nguyên nếu bạn đang dùng) ===
-        topLeft = QtWidgets.QLabel("Nhóm 04")
-        topLeft.setStyleSheet("QLabel { font-weight: 900; font-size: 20px; }")
-        # (nếu bạn muốn đặt chồng góc trái, cần dùng layout overlay riêng; còn không, có thể bỏ)
-    # hàm upload
     def upload_image(self):
         file_path, _ = QtWidgets.QFileDialog.getOpenFileName(
             self, "Chọn ảnh", "", "Images (*.png *.jpg *.jpeg *.bmp)"
@@ -416,6 +361,12 @@ class MainWindow(QtWidgets.QWidget):
             return 0
 
     def run_region_growing_basic(self):
+        """
+        Thuật toán nở vùng cơ bản:
+        1. Bắt đầu từ điểm mầm (seed)
+        2. So sánh điểm lân cận với ĐIỂM MẦM GỐC (không phải điểm hiện tại)
+        3. Nếu |pixel - seed_value| <= threshold → thêm vào vùng
+        """
         seed_text = self.left_widget.txtSeed.text().strip()
         if not seed_text:
             QtWidgets.QMessageBox.warning(self, "Thiếu điểm mầm", "Vui lòng click vào ảnh để chọn điểm mầm.")
@@ -443,6 +394,7 @@ class MainWindow(QtWidgets.QWidget):
         qimg_orig = pix.toImage().convertToFormat(QtGui.QImage.Format_ARGB32)
         w, h = qimg_gray.width(), qimg_gray.height()
 
+        # Tính toán lại tọa độ seed trên ảnh gốc
         label_pixmap = self.panelInput.imgLabel.pixmap()
         if label_pixmap:
             label_w, label_h = label_pixmap.width(), label_pixmap.height()
@@ -465,12 +417,14 @@ class MainWindow(QtWidgets.QWidget):
                                           f"Vui lòng click vào vùng ảnh.")
             return
 
+        # Chuyển ảnh thành numpy array
         img_array = np.zeros((h, w), dtype=np.uint8)
         for y in range(h):
             for x in range(w):
                 img_array[y, x] = QtGui.QColor(qimg_gray.pixel(x, y)).red()
 
-        seed_value = img_array[sy, sx]
+        # ✅ THUẬT TOÁN NỞ VÙNG CƠ BẢN - So sánh với seed gốc
+        seed_value = int(img_array[sy, sx])
         visited = np.zeros((h, w), dtype=bool)
         region = np.zeros((h, w), dtype=bool)
 
@@ -480,14 +434,14 @@ class MainWindow(QtWidgets.QWidget):
         region[sy, sx] = True
         region_count = 1
 
+        # Chọn loại lân cận
         if neighbor_idx == 0:
-            neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+            neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # N4
         else:
-            neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]
+            neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1), (1, 1), (-1, 1), (1, -1), (-1, -1)]  # N8
 
         while queue:
             x, y = queue.popleft()
-            current_seed_value = int(img_array[y, x])
 
             for dx, dy in neighbors:
                 nx, ny = x + dx, y + dy
@@ -495,11 +449,13 @@ class MainWindow(QtWidgets.QWidget):
                     visited[ny, nx] = True
                     neighbor_val = int(img_array[ny, nx])
 
-                    if abs(neighbor_val - current_seed_value) <= thresh:
+                    # ✅ So sánh với SEED GỐC (seed_value), không phải điểm hiện tại
+                    if abs(neighbor_val - seed_value) <= thresh:
                         region[ny, nx] = True
                         region_count += 1
                         queue.append((nx, ny))
 
+        # Tạo ảnh kết quả với overlay màu đỏ
         result = QtGui.QImage(qimg_orig)
         alpha_overlay = 150
 
@@ -520,11 +476,11 @@ class MainWindow(QtWidgets.QWidget):
             self, "Hoàn thành",
             f"Hoàn thành nở vùng.\n"
             f"Kích thước vùng: {region_count} điểm\n"
-            f"Giá trị seed: {seed_value}"
+            f"Giá trị seed: {seed_value}\n"
+            f"Ngưỡng: {thresh}"
         )
 
 def main():
-    # (Qt6 vẫn hỗ trợ đặt thuộc tính DPI; có thể bỏ nếu không cần)
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
     app.setApplicationName("Region Growing UI - PySide6")
