@@ -558,7 +558,6 @@ class MainWindow(QtWidgets.QWidget):
 
         return QtGui.QPixmap.fromImage(result)
 
-
 def main():
     QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QtWidgets.QApplication(sys.argv)
